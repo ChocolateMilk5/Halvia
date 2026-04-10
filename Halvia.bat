@@ -1,10 +1,17 @@
 @echo off
-:: 1. THE CUSTOM WARNING
-set "msg=If you click OK the virus will start, if you risk it, press it. - Personal Malwares"
 set "title=System Alert"
-powershell -Command "if ((mshta 'vbscript:Execute(\"result=msgbox(\"\"%msg%\"\",1+48,\"\"%title%\"\"):close:set fso=createobject(\"\"scripting.filesystemobject\"\"):fso.getstandardstream(1).write result\")') -eq '2') { exit }"
 
-:: 2. THE CHAOS SCRIPT
+:: 1. FIRST YES/NO CONFIRMATION
+set "msg1=Are you sure you want to activate this?"
+powershell -Command "Add-Type -AssemblyName System.Windows.Forms; $r = [System.Windows.Forms.MessageBox]::Show('%msg1%', '%title%', 'YesNo', 'Warning'); if ($r -eq 'No') { exit 1 }"
+if %errorlevel% neq 0 exit
+
+:: 2. FINAL YES/NO CONFIRMATION
+set "msg2=THIS IS YOUR FINAL WARNING, DO YOU REALLY WANT TO ACTIVATE IT?"
+powershell -Command "Add-Type -AssemblyName System.Windows.Forms; $r = [System.Windows.Forms.MessageBox]::Show('%msg2%', '%title%', 'YesNo', 'Error'); if ($r -eq 'No') { exit 1 }"
+if %errorlevel% neq 0 exit
+
+:: 3. THE ORIGINAL CHAOS SCRIPT
 set "ps_script=%temp%\chaos_audio.ps1"
 
 echo Add-Type -AssemblyName System.Windows.Forms > "%ps_script%"
@@ -20,7 +27,7 @@ echo $phrases = @("Halvia", "regret what you have done", "fear this virus") >> "
 
 echo while ($true) { >> "%ps_script%"
 echo     if ([System.Windows.Forms.Control]::ModifierKeys -eq 'Alt') { break } >> "%ps_script%"
-echo     # VIRUS AUDIO (Rapid high-pitched beeps) >> "%ps_script%"
+echo     # VIRUS AUDIO >> "%ps_script%"
 echo     [System.Console]::Beep((Get-Random -Min 400 -Max 2000), 50) >> "%ps_script%"
 echo     # MOUSE JITTER >> "%ps_script%"
 echo     $pos = [System.Windows.Forms.Cursor]::Position >> "%ps_script%"
@@ -42,7 +49,6 @@ echo } >> "%ps_script%"
 echo [CHAOS ACTIVE] - HOLD [ALT] TO STOP.
 powershell -NoProfile -ExecutionPolicy Bypass -File "%ps_script%"
 
-:: 3. CLEAN UP
+:: 4. CLEAN UP
 powershell -command "$shell = New-Object -ComObject Shell.Application; $shell.MinimizeAll(); Start-Sleep -m 200; $shell.UndoMinimizeAll()"
 del "%ps_script%"
-pause
